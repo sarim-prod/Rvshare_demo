@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RVshare MMM Dashboard · MarketLytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['"DM Sans"', 'Arial', 'sans-serif'] },
+      colors: {
+        ink: '#22183A', inksoft: '#4F4763', muted: '#6B6480',
+        paper: '#F8F6FB', paper2: '#EEE9F6', line: '#D9D2E6',
+        brand: { DEFAULT: '#5B3FA8', tint: '#ECE6F7', dark: '#31254F' },
+        coral: { DEFAULT: '#E8664F', text: '#B33F29', tint: '#FCEAE5' },
+        teal: { DEFAULT: '#2A8C80', text: '#1E6B62', tint: '#E2F2EF' }
+      } } }
+  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  input[type=range] { accent-color: #5B3FA8; }
+  .on { background: #5B3FA8 !important; color: #fff !important; border-color: #5B3FA8 !important; }
+  .navon { background: #E8664F !important; color: #22183A !important; font-weight: 700; }
+  .card { background: #fff; border: 1px solid #D9D2E6; border-radius: 1rem; }
+  details > summary::-webkit-details-marker { display: none; }
+</style>
+</head>
+<body class="bg-paper font-sans text-ink min-h-screen">
+
+<!-- ============ TOP BAR (all pages) ============ -->
+<header class="bg-ink text-paper sticky top-0 z-30 shadow">
+  <div class="max-w-7xl mx-auto px-5 py-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div class="mr-auto">
+      <p class="text-xs font-bold tracking-widest text-[#F3C5BB]">RVSHARE · MARKETING MIX MODEL</p>
+      <p class="text-lg font-bold leading-tight">Paid media dashboard</p>
+    </div>
+    <nav class="flex flex-wrap gap-1 text-sm" id="nav">
+      <a href="#summary" data-p="summary" class="px-3 py-1.5 rounded-full hover:bg-brand-dark">Summary</a>
+      <a href="#channels" data-p="channels" class="px-3 py-1.5 rounded-full hover:bg-brand-dark">Channels</a>
+      <a href="#simulator" data-p="simulator" class="px-3 py-1.5 rounded-full hover:bg-brand-dark">Budget simulator</a>
+      <a href="#evidence" data-p="evidence" class="px-3 py-1.5 rounded-full hover:bg-brand-dark">Evidence</a>
+      <a href="#tests" data-p="tests" class="px-3 py-1.5 rounded-full hover:bg-brand-dark">Test plan</a>
+    </nav>
+    <div class="flex items-center gap-3 text-sm">
+      <label class="flex items-center gap-2 bg-brand-dark rounded-full pl-3 pr-1 py-1" title="RVshare's share of each booking. Used for all profit figures.">
+        Take rate
+        <input id="take" type="number" min="5" max="60" step="0.5" value="20" class="w-14 rounded-full text-ink text-right px-2 py-0.5">%
+      </label>
+      <div class="flex bg-brand-dark rounded-full p-1">
+        <button id="pW" class="px-3 py-0.5 rounded-full on">Week</button>
+        <button id="pQ" class="px-3 py-0.5 rounded-full">Quarter</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-5 py-6">
+
+<!-- ======================= PAGE: SUMMARY ======================= -->
+<section data-page="summary" class="page space-y-5">
+  <div class="rounded-2xl bg-ink text-paper p-6">
+    <p class="text-sm text-[#CFC6E3]">Main result</p>
+    <h1 class="text-2xl md:text-3xl font-bold mt-1">Ads drive 35% of bookings. Move money out of Generic and Destination.</h1>
+    <p class="mt-2 text-[#CFC6E3]" id="heroLine"></p>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+    <div class="card p-4"><p class="text-sm text-muted">Bookings from ads</p><p class="text-3xl font-bold text-brand">35%</p><p class="text-xs text-muted">$136M of $392M</p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Return per $1</p><p class="text-3xl font-bold text-brand">$2.64</p><p class="text-xs text-muted">all paid media, average</p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Spend saved</p><p class="text-3xl font-bold text-teal-text" id="kSave"></p><p class="text-xs text-muted" id="kSaveU"></p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Bookings impact</p><p class="text-3xl font-bold" id="kBook"></p><p class="text-xs text-muted" id="kBookU"></p></div>
+    <div class="card p-4 col-span-2 lg:col-span-1" id="kNetBox"><p class="text-sm text-muted">Net gain for RVshare</p><p class="text-3xl font-bold" id="kNet"></p><p class="text-xs text-muted" id="kNetU"></p></div>
+  </div>
+
+  <div class="grid md:grid-cols-4 gap-3">
+    <div class="card p-4 border-l-4 !border-l-coral"><p class="text-xs font-bold text-coral-text">TRIM</p><p class="font-bold">Google Generic −10–15%</p><p class="text-sm text-inksoft">Lowest next-$1 return ($2.68)</p></div>
+    <div class="card p-4 border-l-4 !border-l-coral"><p class="text-xs font-bold text-coral-text">CUT</p><p class="font-bold">Google Destination −30%</p><p class="text-sm text-inksoft">No measurable effect</p></div>
+    <div class="card p-4 border-l-4 !border-l-brand"><p class="text-xs font-bold text-brand">TEST</p><p class="font-bold">Meta +50% in test states</p><p class="text-sm text-inksoft">Measure before scaling</p></div>
+    <div class="card p-4 border-l-4 !border-l-teal"><p class="text-xs font-bold text-teal-text">HOLD</p><p class="font-bold">Brand, Bing, PMax, DSA</p><p class="text-sm text-inksoft">Freed money → PMax, DSA first</p></div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-4">
+    <div class="card p-5">
+      <h3 class="font-bold">Where bookings come from</h3>
+      <div class="h-64 mt-2"><canvas id="cDecomp"></canvas></div>
+    </div>
+    <div class="card p-5 lg:col-span-2">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-bold">Return per $1, by channel</h3>
+        <div class="flex bg-paper2 rounded-full p-1 text-sm">
+          <button id="rAvg" class="px-3 py-0.5 rounded-full on">Average</button>
+          <button id="rNext" class="px-3 py-0.5 rounded-full">Next $1 today</button>
+        </div>
+      </div>
+      <div class="h-64 mt-2"><canvas id="cRoas"></canvas></div>
+      <p class="text-xs text-muted mt-1">Dashed line = break-even at your take rate. Click a bar to open that channel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PAGE: CHANNELS ======================= -->
+<section data-page="channels" class="page space-y-4 hidden">
+  <div class="flex flex-wrap gap-2" id="chanPills"></div>
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="chanKpis"></div>
+  <div class="grid lg:grid-cols-3 gap-4">
+    <div class="card p-5 lg:col-span-2">
+      <h3 class="font-bold">Bookings gained or lost vs. today <span class="font-normal text-muted text-sm" id="curveUnit"></span></h3>
+      <div class="h-72 mt-2"><canvas id="cCurve"></canvas></div>
+      <p class="text-xs text-muted">Grey dot = today. Coral dot = your simulator plan. The curve flattens where extra dollars return less.</p>
+    </div>
+    <div class="card p-5">
+      <h3 class="font-bold">How long the effect lasts</h3>
+      <p class="text-xs text-muted">Share of this week’s ad effect still active</p>
+      <div class="h-64 mt-2"><canvas id="cDecay"></canvas></div>
+    </div>
+  </div>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="card p-5">
+      <h3 class="font-bold">Share of spend vs. share of effect</h3>
+      <div class="h-64 mt-2"><canvas id="cShare"></canvas></div>
+    </div>
+    <div class="card p-5">
+      <h3 class="font-bold">Does the next $1 pay for itself?</h3>
+      <p class="text-xs text-muted" id="beLine"></p>
+      <div class="h-60 mt-2"><canvas id="cProfit"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PAGE: SIMULATOR ======================= -->
+<section data-page="simulator" class="page space-y-4 hidden">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="text-sm text-muted mr-1">Start from:</span>
+    <button data-preset="today" class="preset px-3 py-1.5 rounded-full border border-line bg-white text-sm">Today</button>
+    <button data-preset="plan" class="preset px-3 py-1.5 rounded-full border border-line bg-white text-sm">Recommended plan</button>
+    <button data-preset="shift" class="preset px-3 py-1.5 rounded-full border border-line bg-white text-sm">Plan + savings to PMax & DSA</button>
+    <button data-preset="search2024" class="preset px-3 py-1.5 rounded-full border border-line bg-white text-sm">Generic at 2024 level</button>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="card p-4"><p class="text-sm text-muted">Ad spend</p><p class="text-2xl font-bold text-brand" id="sSpend"></p><p class="text-sm" id="sSpendD"></p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Bookings value</p><p class="text-2xl font-bold text-brand" id="sGbv"></p><p class="text-sm" id="sGbvD"></p></div>
+    <div class="card p-4"><p class="text-sm text-muted">RVshare revenue change</p><p class="text-2xl font-bold" id="sRev"></p><p class="text-xs text-muted">bookings change × take rate</p></div>
+    <div class="card p-4" id="sNetBox"><p class="text-sm text-muted">Net after ad spend</p><p class="text-2xl font-bold" id="sNet"></p><p class="text-xs text-muted">revenue change − spend change</p></div>
+  </div>
+  <div id="warns" class="space-y-2"></div>
+
+  <div class="grid lg:grid-cols-5 gap-4">
+    <div class="card p-5 lg:col-span-3">
+      <div class="flex justify-between items-center"><h3 class="font-bold">Weekly spend by channel</h3><button id="reset" class="text-sm text-brand font-medium">Reset to today</button></div>
+      <div id="sliders" class="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-4"></div>
+    </div>
+    <div class="lg:col-span-2 space-y-4">
+      <div class="card p-5">
+        <h3 class="font-bold">Change in bookings, by channel</h3>
+        <div class="h-56 mt-2"><canvas id="cDelta"></canvas></div>
+      </div>
+      <div class="card p-5">
+        <h3 class="font-bold">Spend mix: today vs. your plan</h3>
+        <div class="h-56 mt-2"><canvas id="cMix"></canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PAGE: EVIDENCE ======================= -->
+<section data-page="evidence" class="page space-y-4 hidden">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="card p-4"><p class="text-sm text-muted">Search spend, summer 2025</p><p class="text-3xl font-bold text-coral-text">−65%</p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Bookings, same weeks</p><p class="text-3xl font-bold text-brand">−14%</p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Generic return per $1, 2024</p><p class="text-3xl font-bold">$2.18</p></div>
+    <div class="card p-4"><p class="text-sm text-muted">Generic return per $1, 2026</p><p class="text-3xl font-bold text-teal-text">$3.97</p></div>
+  </div>
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="card p-5">
+      <h3 class="font-bold">2025 search cut: bookings fell far less than spend</h3>
+      <p class="text-xs text-muted">Summer (May–Aug), weekly averages, indexed to 2024 = 100</p>
+      <div class="h-64 mt-2"><canvas id="cCut"></canvas></div>
+    </div>
+    <div class="card p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-bold">Generic: more spend, less per $1</h3>
+        <div class="flex bg-paper2 rounded-full p-1 text-sm">
+          <button id="gY" class="px-3 py-0.5 rounded-full on">By year</button>
+          <button id="gS" class="px-3 py-0.5 rounded-full">By season</button>
+        </div>
+      </div>
+      <div class="h-64 mt-2"><canvas id="cGen"></canvas></div>
+    </div>
+  </div>
+  <div class="card p-5">
+    <h3 class="font-bold">How sure we are</h3>
+    <div class="mt-3 grid md:grid-cols-2 gap-x-8 gap-y-2 text-sm" id="conf"></div>
+  </div>
+</section>
+
+<!-- ======================= PAGE: TESTS ======================= -->
+<section data-page="tests" class="page space-y-4 hidden">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h2 class="text-xl font-bold">Four tests, safest first</h2>
+    <div class="flex gap-4 text-sm text-inksoft">
+      <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#CBBDEB]"></span>Running</span>
+      <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-teal"></span>S first signs</span>
+      <span class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-coral"></span>D decision</span>
+    </div>
+  </div>
+  <div id="testList" class="space-y-2"></div>
+  <p class="text-sm bg-brand-tint rounded-xl px-4 py-3"><b>Quick saving, not a test:</b> stop Destination spend in areas with spend but no bookings for 90 days.</p>
+  <div class="grid md:grid-cols-3 gap-3">
+    <div class="card p-4"><p class="text-xs font-bold text-coral-text">STEP 1</p><p class="font-bold">Pair up states</p><p class="text-sm text-inksoft">Weekly bookings moved together for 2 years (picked with GeoLift).</p></div>
+    <div class="card p-4"><p class="text-xs font-bold text-coral-text">STEP 2</p><p class="font-bold">Change one thing</p><p class="text-sm text-inksoft">Spend changes in test states only.</p></div>
+    <div class="card p-4"><p class="text-xs font-bold text-coral-text">STEP 3</p><p class="font-bold">Read the gap</p><p class="text-sm text-inksoft">Season and demand hit both alike; the gap is the ad’s effect.</p></div>
+  </div>
+  <div class="grid md:grid-cols-2 gap-3 text-sm">
+    <p class="card p-4"><b class="text-brand">Not profit.</b> Returns are bookings value; RVshare keeps its take rate.</p>
+    <p class="card p-4"><b class="text-brand">Not CJ / affiliate.</b> Paid per booking, so left out of the model.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="max-w-7xl mx-auto px-5 pb-6 text-xs text-muted flex flex-wrap justify-between gap-2">
+  <p>MarketLytics · Robyn model (demo data) · Apr 2023 – Sep 2026 · values are bookings value (GBV) unless noted</p>
+  <p>Estimates, not guarantees: confirm large moves with the test plan.</p>
+</footer>
+
+<script>
+/* ============================ DATA ============================
+   DEMO VERSION: all figures are dummy values, not client data. Weekly GBV from a channel = coef * h(x),
+   x = spend / (1 - theta), h(x) = x^alpha / (x^alpha + inf^alpha).
+   Curve parameters are illustrative.
+   ============================================================= */
+const CH = [
+  { id:'gen', name:'Google Generic', theta:0.01, alpha:0.85, coef:1099069.54, inf:275405, today:57992, max:424905, avg:2.54, share:[50,47], fall:'Already falling', note:'Biggest budget, already past the point where returns fall.' },
+  { id:'bing', name:'Bing', theta:0.15, alpha:2.3, coef:801467.62, inf:111081, today:26660, max:96892, avg:3.50, share:[18,22], fall:'~$65K a week', note:'Working well; moves closely with Google.' },
+  { id:'dsa', name:'Google DSA', theta:0.2, alpha:2.2, coef:408033.79, inf:66146, today:16102, max:68829, avg:2.63, share:[7,8], fall:'~$35K a week', note:'Strong next $1; first in line for freed budget.' },
+  { id:'pmax', name:'Google PMax', theta:0.1, alpha:1.9, coef:334340.77, inf:44306, today:9421, max:53242, avg:3.43, share:[6,8], fall:'~$20K a week', note:'Best next $1; first in line for freed budget.' },
+  { id:'meta', name:'Meta', theta:0.3, alpha:2.4, coef:188679.73, inf:37978, today:8447, max:44135, avg:3.24, share:[7,7], fall:'~$20K a week', note:'Effect builds over ~3 weeks. Test before scaling.' },
+  { id:'dest', name:'Google Destination', theta:0.18, alpha:1.7, coef:0.00, inf:51598, today:8090, max:50128, avg:0.00, share:[6,0], fall:'No effect', note:'No measurable effect on bookings. Cut 30%.' },
+  { id:'brand', name:'Google Brand', theta:0.03, alpha:2.4, coef:896178.75, inf:52156, today:7313, max:55038, avg:4.15, share:[4,8], fall:'Limited by brand searches', note:'Includes people already searching for RVshare.' },
+  { id:'oth', name:'Google Other', theta:0.05, alpha:2.3, coef:0.00, inf:20023, today:3760, max:31311, avg:0.00, share:[2,0], fall:'No effect', note:'Small, no clear effect. Check what it is used for.' }
+];
+const BASE = 1407900;   // weekly GBV not driven by ads (dummy)
+const C = { purple:'#5B3FA8', coral:'#E8664F', grey:'#B9B2C9', lilac:'#CBBDEB', teal:'#2A8C80', ink:'#22183A', muted:'#6B6480', line:'#E6E0EF' };
+
+const resp = (c, s) => { if (!c.coef || s <= 0) return 0; const x = s/(1-c.theta);
+  return c.coef * Math.pow(x,c.alpha) / (Math.pow(x,c.alpha) + Math.pow(c.inf,c.alpha)); };
+const next1 = (c, s) => { const b = Math.max(s, 500); return c.coef ? (resp(c,b*1.01) - resp(c,b)) / (b*0.01) : 0; };
+const fmt = v => { const a = Math.abs(v), s = v < 0 ? '−' : '';
+  return a >= 1e6 ? `${s}$${(a/1e6).toFixed(2)}M` : a >= 1e3 ? `${s}$${(a/1e3).toFixed(1)}K` : `${s}$${a.toFixed(0)}`; };
+const sgn = v => (v > 0.5 ? '+' : '') + fmt(v);
+
+Chart.defaults.font.family = '"DM Sans", Arial, sans-serif';
+Chart.defaults.font.size = 13;
+Chart.defaults.color = C.muted;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+
+/* ============================ STATE ============================ */
+const S = {
+  take: 0.20, quarter: false, roasMode: 'avg', genMode: 'year', chan: 'gen',
+  plan: Object.fromEntries(CH.map(c => [c.id, c.today]))
+};
+const PRESETS = {
+  today: () => Object.fromEntries(CH.map(c => [c.id, c.today])),
+  plan:  () => ({ ...PRESETS.today(), gen: Math.round(57992*0.875), dest: Math.round(8090*0.7) }),
+  shift: () => { const p = PRESETS.plan(); const f = (57992-p.gen) + (8090-p.dest);
+                 p.pmax += Math.round(f/2); p.dsa += Math.round(f/2); return p; },
+  search2024: () => ({ ...PRESETS.today(), gen: 231400 })
+};
+const k = () => S.quarter ? 13 : 1;
+const unit = () => S.quarter ? 'per quarter' : 'per week';
+const breakEven = () => 1 / S.take;
+function evalPlan(plan){
+  let s0=0,s1=0,g0=0,g1=0;
+  CH.forEach(c => { s0+=c.today; s1+=plan[c.id]; g0+=resp(c,c.today); g1+=resp(c,plan[c.id]); });
+  const dS=(s1-s0)*k(), dG=(g1-g0)*k(), dR=dG*S.take;
+  return { s1:s1*k(), g1:(BASE+g1)*k(), dS, dG, dR, net:dR-dS, pct:(g1-g0)/(BASE+g0)*100 };
+}
+
+/* ============================ ROUTER ============================ */
+const built = {};
+function show(page){
+  if (!document.querySelector(`[data-page="${page}"]`)) page = 'summary';
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('hidden', p.dataset.page !== page));
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('navon', a.dataset.p === page));
+  if (!built[page]) { BUILD[page](); built[page] = true; }
+  refresh(); window.scrollTo(0,0);
+}
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+
+/* ============================ GLOBAL CONTROLS ============================ */
+document.getElementById('take').addEventListener('input', e => { const v = +e.target.value; if (v >= 1) { S.take = v/100; refresh(); } });
+document.getElementById('pW').onclick = () => { S.quarter=false; pTog(); refresh(); };
+document.getElementById('pQ').onclick = () => { S.quarter=true;  pTog(); refresh(); };
+const pTog = () => { document.getElementById('pW').classList.toggle('on',!S.quarter); document.getElementById('pQ').classList.toggle('on',S.quarter); };
+
+const CH_ = {};   // charts
+const bar = (id, cfg) => (CH_[id] = new Chart(document.getElementById(id), cfg));
+const grid = { color: C.line };
+
+/* ============================ PAGE BUILDERS ============================ */
+const BUILD = {
+  summary(){
+    bar('cDecomp', { type:'doughnut',
+      data:{ labels:['Base & season','RV search demand','Paid media'], datasets:[{ data:[37,28,35], backgroundColor:[C.grey,C.lilac,C.coral], borderWidth:2, borderColor:'#fff' }] },
+      options:{ maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom' }, tooltip:{ callbacks:{ label:x=>` ${x.label}: ${x.raw}% (${['$145M','$110M','$136M'][x.dataIndex]})` } } } } });
+    bar('cRoas', { data:{ labels:[], datasets:[
+        { type:'bar', data:[], backgroundColor:[], borderRadius:6, label:'Return per $1' },
+        { type:'line', data:[], borderColor:C.coral, borderDash:[6,4], borderWidth:2, pointRadius:0, label:'Break-even' } ] },
+      options:{ maintainAspectRatio:false, onClick:(e,els)=>{ if(els.length){ S.chan = sortedRoas()[els[0].index].id; location.hash='channels'; } },
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:x=>` ${x.dataset.label}: $${x.raw.toFixed(2)}` } } },
+        scales:{ y:{ beginAtZero:true, grid, ticks:{ callback:v=>'$'+v } }, x:{ grid:{display:false} } } } });
+    [['rAvg','avg'],['rNext','next']].forEach(([id,m]) => document.getElementById(id).onclick = () => {
+      S.roasMode=m; document.getElementById('rAvg').classList.toggle('on',m==='avg'); document.getElementById('rNext').classList.toggle('on',m==='next'); refresh(); });
+  },
+  channels(){
+    document.getElementById('chanPills').innerHTML = CH.map(c => `<button data-c="${c.id}" class="cp px-3 py-1.5 rounded-full border border-line bg-white text-sm">${c.name}</button>`).join('');
+    document.querySelectorAll('.cp').forEach(b => b.onclick = () => { S.chan = b.dataset.c; refresh(); });
+    bar('cCurve', { type:'line', data:{ datasets:[
+        { data:[], borderColor:C.purple, borderWidth:2.5, pointRadius:0, parsing:false, tension:0.2, label:'Model' },
+        { type:'scatter', data:[], backgroundColor:C.grey, borderColor:C.ink, pointRadius:8, parsing:false, label:'Today' },
+        { type:'scatter', data:[], backgroundColor:C.coral, borderColor:C.ink, pointRadius:8, parsing:false, label:'Your plan' } ] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:x=>` ${fmt(x.raw.x)}/wk → ${sgn(x.raw.y)}` } } },
+        scales:{ x:{ type:'linear', grid, ticks:{ callback:v=>fmt(v) }, title:{display:true,text:'Weekly spend'} }, y:{ grid, ticks:{ callback:v=>fmt(v) } } } } });
+    bar('cDecay', { type:'bar', data:{ labels:['This wk','Next wk','+2','+3','+4'], datasets:[{ data:[], backgroundColor:C.purple, borderRadius:4 }] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:x=>` ${x.raw.toFixed(1)}% still active` } } },
+        scales:{ y:{ max:100, grid, ticks:{ callback:v=>v+'%' } }, x:{ grid:{display:false} } } } });
+    bar('cShare', { type:'bar', data:{ labels:CH.map(c=>c.name.replace('Google ','')), datasets:[
+        { label:'% of spend', data:CH.map(c=>c.share[0]), backgroundColor:[], borderRadius:4 },
+        { label:'% of effect', data:CH.map(c=>c.share[1]), backgroundColor:[], borderRadius:4 } ] },
+      options:{ indexAxis:'y', maintainAspectRatio:false, onClick:(e,els)=>{ if(els.length){ S.chan=CH[els[0].index].id; refresh(); } },
+        plugins:{ tooltip:{ callbacks:{ label:x=>` ${x.dataset.label}: ${x.raw}%` } } }, scales:{ x:{ grid, ticks:{ callback:v=>v+'%' } }, y:{ grid:{display:false} } } } });
+    bar('cProfit', { data:{ labels:CH.filter(c=>c.coef).map(c=>c.name.replace('Google ','')), datasets:[
+        { type:'bar', data:[], backgroundColor:[], borderRadius:6, label:'Next $1' },
+        { type:'line', data:[], borderColor:C.coral, borderDash:[6,4], borderWidth:2, pointRadius:0, label:'Break-even' } ] },
+      options:{ maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:x=>` ${x.dataset.label}: $${x.raw.toFixed(2)}` } } },
+        scales:{ y:{ beginAtZero:true, grid, ticks:{ callback:v=>'$'+v } }, x:{ grid:{display:false} } } } });
+  },
+  simulator(){
+    document.getElementById('sliders').innerHTML = CH.map(c => {
+      const mx = Math.round(c.max*1.25/500)*500;
+      return `<div><div class="flex items-center justify-between text-sm">
+        <span class="font-medium">${c.name}</span>
+        <span class="flex items-center gap-1"><span class="text-muted">${fmt(c.today)} →</span>
+        $<input type="number" id="n_${c.id}" min="0" max="${mx}" step="100" class="w-20 border border-line rounded px-1.5 py-0.5 text-right">
+        <span id="d_${c.id}" class="w-12 text-right font-bold"></span></span></div>
+        <input type="range" id="r_${c.id}" min="0" max="${mx}" step="100" class="w-full"></div>`; }).join('');
+    CH.forEach(c => {
+      const r = document.getElementById('r_'+c.id), n = document.getElementById('n_'+c.id);
+      r.oninput = () => { S.plan[c.id] = +r.value; clearPreset(); refresh(); };
+      n.oninput = () => { S.plan[c.id] = Math.max(0, +n.value||0); clearPreset(); refresh(); };
+    });
+    document.querySelectorAll('.preset').forEach(b => b.onclick = () => { S.plan = PRESETS[b.dataset.preset](); clearPreset(); b.classList.add('on'); refresh(); });
+    document.getElementById('reset').onclick = () => document.querySelector('.preset[data-preset="today"]').click();
+    bar('cDelta', { type:'bar', data:{ labels:CH.map(c=>c.name.replace('Google ','')), datasets:[{ data:[], backgroundColor:[], borderRadius:4 }] },
+      options:{ indexAxis:'y', maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:x=>` ${sgn(x.raw)} bookings ${unit()}` } } },
+        scales:{ x:{ grid, ticks:{ callback:v=>fmt(v) } }, y:{ grid:{display:false} } } } });
+    const pal = [C.purple,'#8B74CC',C.teal,'#7FC3B9',C.coral,'#F3A99B',C.grey,'#DDD7E8'];
+    bar('cMix', { type:'bar', data:{ labels:['Today','Your plan'], datasets:CH.map((c,i)=>({ label:c.name.replace('Google ',''), data:[0,0], backgroundColor:pal[i], barThickness:28 })) },
+      options:{ indexAxis:'y', animation:false, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:8, padding:8, font:{size:11} } }, tooltip:{ callbacks:{ label:x=>` ${x.dataset.label}: ${fmt(x.raw)}/wk` } } },
+        scales:{ x:{ stacked:true, grid, ticks:{ callback:v=>fmt(v) } }, y:{ stacked:true, grid:{display:false} } } } });
+  },
+  evidence(){
+    bar('cCut', { type:'bar', data:{ labels:['2024','2025','2026'], datasets:[
+        { label:'Google + Bing spend', data:[100,35,38], backgroundColor:C.grey, borderRadius:4 },
+        { label:'Bookings value', data:[100,86,80], backgroundColor:C.purple, borderRadius:4 } ] },
+      options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:x=> ` ${x.dataset.label}: ${x.raw} (${x.datasetIndex? ['$2.89M','$2.49M','$2.31M'][x.dataIndex] : ['$497K','$174K','$189K'][x.dataIndex]} / wk)` } } },
+        scales:{ y:{ grid, beginAtZero:true }, x:{ grid:{display:false} } } } });
+    bar('cGen', { data:{ labels:[], datasets:[
+        { type:'bar', label:'Spend / week', data:[], backgroundColor:C.grey, borderRadius:4, yAxisID:'y', order:2 },
+        { type:'line', label:'Return per $1', data:[], borderColor:C.coral, backgroundColor:C.coral, borderWidth:3, pointRadius:6, yAxisID:'y1', order:1 } ] },
+      options:{ maintainAspectRatio:false, plugins:{ tooltip:{ callbacks:{ label:x=> x.datasetIndex ? ` $${x.raw.toFixed(2)} per $1` : ` $${x.raw}K / week` } } },
+        scales:{ y:{ grid, ticks:{ callback:v=>'$'+v+'K' } }, y1:{ position:'right', min:0, grid:{display:false}, ticks:{ callback:v=>'$'+v } }, x:{ grid:{display:false} } } } });
+    [['gY','year'],['gS','season']].forEach(([id,m]) => document.getElementById(id).onclick = () => {
+      S.genMode=m; document.getElementById('gY').classList.toggle('on',m==='year'); document.getElementById('gS').classList.toggle('on',m==='season'); refresh(); });
+    const conf = [['Ads drive about a quarter of bookings','High'],['Search past good returns at 2023–24 spend','High'],['Destination shows no measurable effect','High'],
+      ['Extra summer Generic dollars return least','Medium'],['Meta returns about $3.25 per $1 today','Medium'],['What more Meta spend would add','Low'],['Brand’s true effect; Google vs. Bing split','Low']];
+    const col = { High:'text-teal-text', Medium:'text-brand', Low:'text-coral-text' };
+    document.getElementById('conf').innerHTML = conf.map(([t,l]) => `<div class="flex justify-between border-b border-line py-1.5"><span>${t}</span><b class="${col[l]}">${l}</b></div>`).join('');
+  },
+  tests(){
+    const T = [
+      { t:'Cut Destination 30%', s:'$8.1K → $5.7K a week', r:'Very low', rc:'bg-teal-tint text-teal-text', run:[1,6], sg:3, d:6,
+        how:'Test states vs. matched states with the same past bookings.', rule:'Bookings within ~2% of matched states → cut everywhere.' },
+      { t:'Trim Generic 10–15%', s:'Weakest campaigns first', r:'Low', rc:'bg-teal-tint text-teal-text', run:[1,6], sg:2, d:6,
+        how:'Google Ads experiment: searches split 50/50, trimmed vs. current.', rule:'Bookings within ~2% → apply the trim everywhere.' },
+      { t:'Meta +50%', s:'$8.4K → $12.7K, test states only', r:'Medium', rc:'bg-brand-tint text-brand', run:[2,9], sg:5, d:9,
+        how:'Test states vs. matched states with the same past bookings.', rule:'Measured return above the break-even bar → scale nationally.' },
+      { t:'Generic −30%', s:'Short holdout in a few states', r:'Higher', rc:'bg-coral-tint text-coral-text', run:[2,9], sg:3, d:9,
+        how:'Test states vs. matched states with the same past bookings.', rule:'Measured effect feeds the next model.' } ];
+    const cell = (x,w) => w===x.sg ? '<span class="w-8 h-8 rounded bg-teal text-white text-sm font-bold flex items-center justify-center">S</span>'
+      : w===x.d ? '<span class="w-8 h-8 rounded bg-coral text-ink text-sm font-bold flex items-center justify-center">D</span>'
+      : `<span class="w-8 h-8 rounded ${w>=x.run[0]&&w<=x.run[1] ? 'bg-[#CBBDEB]' : 'bg-paper2'}"></span>`;
+    document.getElementById('testList').innerHTML = T.map((x,i) => `<details class="card">
+      <summary class="cursor-pointer list-none p-4 flex flex-wrap items-center gap-4">
+        <span class="w-10 h-10 rounded-full bg-brand text-white font-bold flex items-center justify-center">${i+1}</span>
+        <span class="flex-1 min-w-[200px]"><b class="block">${x.t}</b><span class="text-sm text-inksoft">${x.s}</span></span>
+        <span class="px-3 py-1 rounded-full text-sm font-bold ${x.rc}">${x.r}</span>
+        <span class="flex flex-col gap-0.5"><span class="flex gap-1 text-[11px] text-muted">${[1,2,3,4,5,6,7,8,9].map(w=>`<span class="w-8 text-center">${w}</span>`).join('')}</span>
+        <span class="flex gap-1">${[1,2,3,4,5,6,7,8,9].map(w=>cell(x,w)).join('')}</span></span>
+        <span class="text-brand text-sm font-medium">Details ▾</span></summary>
+      <div class="px-4 pb-4 grid md:grid-cols-2 gap-3 text-sm text-inksoft border-t border-line pt-3">
+        <p><b class="text-ink">How we prove it:</b> ${x.how}</p><p><b class="text-ink">Decision:</b> ${x.rule}</p></div></details>`).join('');
+  }
+};
+const clearPreset = () => document.querySelectorAll('.preset').forEach(b => b.classList.remove('on'));
+const sortedRoas = () => [...CH].sort((a,b) => (S.roasMode==='avg' ? b.avg-a.avg : next1(b,b.today)-next1(a,a.today)));
+
+/* ============================ REFRESH (all live values) ============================ */
+function refresh(){
+  const be = breakEven();
+  // ---- summary
+  const rec = evalPlan(PRESETS.plan());
+  document.getElementById('kSave').textContent = fmt(-rec.dS);
+  document.getElementById('kSaveU').textContent = unit() + ', recommended plan';
+  document.getElementById('kBook').textContent = rec.pct.toFixed(1) + '%';
+  document.getElementById('kBook').className = 'text-3xl font-bold text-coral-text';
+  document.getElementById('kBookU').textContent = `${sgn(rec.dG)} bookings value ${unit()}`;
+  document.getElementById('kNet').textContent = sgn(rec.net);
+  document.getElementById('kNet').className = 'text-3xl font-bold ' + (rec.net >= 0 ? 'text-teal-text' : 'text-coral-text');
+  document.getElementById('kNetBox').className = 'card p-4 col-span-2 lg:col-span-1 ' + (rec.net >= 0 ? '!bg-teal-tint' : '!bg-coral-tint');
+  document.getElementById('kNetU').textContent = `${unit()} at ${(S.take*100).toFixed(1).replace('.0','')}% take rate`;
+  document.getElementById('heroLine').textContent =
+    `Recommended plan: trim Generic 12.5% and cut Destination 30%. Saves ${fmt(-rec.dS)} ${unit()} for a ${Math.abs(rec.pct).toFixed(1)}% dip in bookings: net ${sgn(rec.net)} ${unit()} at your take rate.`;
+  if (CH_.cRoas){
+    const L = sortedRoas(), vals = L.map(c => S.roasMode==='avg' ? c.avg : next1(c,c.today));
+    CH_.cRoas.data.labels = L.map(c => c.name.replace('Google ',''));
+    CH_.cRoas.data.datasets[0].data = vals;
+    CH_.cRoas.data.datasets[0].backgroundColor = vals.map(v => v===0 ? C.grey : v>=be ? C.teal : C.purple);
+    CH_.cRoas.data.datasets[1].data = L.map(()=>be);
+    CH_.cRoas.update('none');
+  }
+  // ---- channels
+  if (CH_.cCurve){
+    const c = CH.find(x => x.id===S.chan);
+    document.querySelectorAll('.cp').forEach(b => b.classList.toggle('on', b.dataset.c===S.chan));
+    const weeks = c.theta < 0.05 ? 'Same week' : c.theta < 0.22 ? '~2 weeks' : '~3 weeks';
+    const n1 = next1(c,c.today);
+    const kp = [['Spend today', fmt(c.today)+'/wk'], ['Average per $1', '$'+c.avg.toFixed(2)], ['Next $1 today', '$'+n1.toFixed(2), n1>=be?'text-teal-text':''],
+                ['Effect lasts', `${Math.round(c.theta*100)}% · ${weeks}`], ['Returns fall above', c.fall]];
+    document.getElementById('chanKpis').innerHTML = kp.map(([a,b,cl]) => `<div class="card p-3"><p class="text-xs text-muted">${a}</p><p class="text-xl font-bold ${cl||''}">${b}</p></div>`).join('')
+      + `<p class="col-span-2 md:col-span-5 text-sm bg-coral-tint rounded-xl px-4 py-2 font-medium">${c.note}</p>`;
+    const top = Math.max(c.max, S.plan[c.id], c.today)*1.15, r0 = resp(c,c.today), pts=[];
+    for (let i=0;i<=80;i++){ const s=top*i/80; pts.push({ x:s, y:(resp(c,s)-r0)*k() }); }
+    CH_.cCurve.data.datasets[0].data = pts;
+    CH_.cCurve.data.datasets[1].data = [{ x:c.today, y:0 }];
+    CH_.cCurve.data.datasets[2].data = [{ x:S.plan[c.id], y:(resp(c,S.plan[c.id])-r0)*k() }];
+    CH_.cCurve.update('none');
+    document.getElementById('curveUnit').textContent = '(' + unit() + ')';
+    CH_.cDecay.data.datasets[0].data = [0,1,2,3,4].map(w => Math.pow(c.theta,w)*100); CH_.cDecay.update('none');
+    CH_.cShare.data.datasets[0].backgroundColor = CH.map(x => x.id===S.chan ? '#8B74CC' : C.grey);
+    CH_.cShare.data.datasets[1].backgroundColor = CH.map(x => x.id===S.chan ? C.purple : '#D9D2E6'); CH_.cShare.update('none');
+    const pc = CH.filter(x=>x.coef), pv = pc.map(x=>next1(x,x.today));
+    CH_.cProfit.data.datasets[0].data = pv; CH_.cProfit.data.datasets[0].backgroundColor = pv.map(v => v>=be ? C.teal : C.grey);
+    CH_.cProfit.data.datasets[1].data = pc.map(()=>be); CH_.cProfit.update('none');
+    document.getElementById('beLine').textContent = `At a ${(S.take*100).toFixed(1).replace('.0','')}% take rate, $1 of ads must bring back $${be.toFixed(2)} of bookings. Green = clears the bar.`;
+  }
+  // ---- simulator
+  if (CH_.cDelta){
+    const r = evalPlan(S.plan), u = S.quarter ? '/qtr' : '/wk';
+    document.getElementById('sSpend').textContent = fmt(r.s1)+u;
+    document.getElementById('sSpendD').innerHTML = `<b class="${r.dS<=0?'text-teal-text':'text-coral-text'}">${sgn(r.dS)}</b> vs today`;
+    document.getElementById('sGbv').textContent = fmt(r.g1)+u;
+    document.getElementById('sGbvD').innerHTML = `<b class="${r.dG>=0?'text-teal-text':'text-coral-text'}">${sgn(r.dG)}</b> (${r.pct>=0?'+':''}${r.pct.toFixed(1)}%)`;
+    document.getElementById('sRev').textContent = sgn(r.dR);
+    document.getElementById('sRev').className = 'text-2xl font-bold ' + (r.dR>=0?'text-teal-text':'text-coral-text');
+    document.getElementById('sNet').textContent = sgn(r.net);
+    document.getElementById('sNet').className = 'text-2xl font-bold ' + (r.net>=0?'text-teal-text':'text-coral-text');
+    document.getElementById('sNetBox').className = 'card p-4 ' + (r.net>=0?'!bg-teal-tint':'!bg-coral-tint');
+    const warns = [];
+    CH.forEach(c => {
+      const v = S.plan[c.id], rr = document.getElementById('r_'+c.id), nn = document.getElementById('n_'+c.id);
+      if (+rr.value !== v) rr.value = v; if (document.activeElement !== nn) nn.value = v;
+      const p = c.today ? (v/c.today-1)*100 : 0, d = document.getElementById('d_'+c.id);
+      d.textContent = Math.abs(p)<0.5 ? '' : (p>0?'+':'−')+Math.abs(p).toFixed(0)+'%';
+      d.className = 'w-12 text-right font-bold ' + (p>0?'text-teal-text':'text-coral-text');
+      if (c.coef && v > c.max) warns.push(`${c.name}: above the highest weekly spend ever seen (${fmt(c.max)}). Estimate is a guess.`);
+      else if (c.coef && v > c.today*2) warns.push(`${c.name}: more than double today’s spend. Test before scaling.`);
+      else if (c.id==='brand' && v > c.today*1.2) warns.push('Google Brand: only helps if ads are missing brand searches today. Check impression share.');
+    });
+    document.getElementById('warns').innerHTML = warns.map(w => `<p class="bg-coral-tint text-coral-text text-sm font-medium rounded-xl px-4 py-2">⚠ ${w}</p>`).join('');
+    const ds = CH.map(c => (resp(c,S.plan[c.id]) - resp(c,c.today))*k());
+    CH_.cDelta.data.datasets[0].data = ds; CH_.cDelta.data.datasets[0].backgroundColor = ds.map(v => v>=0 ? C.teal : C.coral); CH_.cDelta.update('none');
+    CH_.cMix.data.datasets.forEach((d,i) => d.data = [CH[i].today, S.plan[CH[i].id]]); CH_.cMix.update('none');
+  }
+  // ---- evidence
+  if (CH_.cGen){
+    const G = S.genMode==='year' ? { l:['2023','2024','2025','2026'], s:[224,231,94,69], r:[2.20,2.18,3.30,3.97] }
+                                 : { l:['Off (Nov–Feb)','Shoulder','Peak (May–Aug)'], s:[117,146,194], r:[2.99,2.67,2.25] };
+    CH_.cGen.data.labels = G.l; CH_.cGen.data.datasets[0].data = G.s; CH_.cGen.data.datasets[1].data = G.r; CH_.cGen.update();
+  }
+}
+
+/* ============================ START ============================ */
+S.plan = PRESETS.plan();
+show(location.hash.slice(1) || 'summary');
+setTimeout(() => { const b = document.querySelector('.preset[data-preset="plan"]'); if (b) b.classList.add('on'); }, 0);
+</script>
+</body>
+</html>
